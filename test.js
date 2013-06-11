@@ -13,6 +13,7 @@ emitter.emit('data', 'Hello, Events2!');
 
 fs.writeFile('/hello.txt', 'Hello, File System!', function (err) {
     if (err) console.log(err.message);
+    else console.log('Write successful for /hello.txt');
 });
 
 /*
@@ -28,6 +29,7 @@ fs.readFile('/hello.txt', function (err, data) {
 
 fs.writeFile('/usr/bin/hello.txt', 'Hello, BIN!', function (err) {
     if (err) console.log(err.message);
+    else console.log('Write successful for /usr/bin/hello.txt');
 });
 
 /*
@@ -39,4 +41,10 @@ fs.readFile('/usr/bin/hello.txt', function (err, data) {
     } else {
         console.log(data);
     }
+});
+
+var frs = fs.createReadStream('/hello.txt');
+frs.on('readable', function () {
+    var content = frs.read();
+    console.log('File ReadStream: ' + content);
 });
