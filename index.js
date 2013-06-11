@@ -93,7 +93,7 @@ Readable.prototype.read = function () {
 };
 
 Readable.prototype._read = function (size) {
-    throw new Error('Function is not overriden!');
+    throw new Error('Function Readable._read is not overriden!');
 };
 
 Readable.prototype.on = function (event, listener) {
@@ -103,6 +103,21 @@ Readable.prototype.on = function (event, listener) {
         // Always zero for now. But implementors should read data.
         this._read(0);
     }
+};
+
+var Writable = function () {
+    EventEmitter.call(this);
+};
+
+Writable.prototype.__proto__ = events.EventEmitter.prototype;
+
+Writable.prototype._write = function (size) {
+    throw new Error('Function Writable._write is not overriden!');
+};
+
+Writable.prototype.write = function (chunk) {
+    this._write(chunk);
+    return true;
 };
 
 /*
@@ -166,8 +181,12 @@ FileSystem.ReadStream.prototype.path = undefined;
 FileSystem.ReadStream.prototype._read = function (size) {
     var _this = this;
     fs.readFile(this.path, function (err, data) {
-        _this.data = data;
-        _this.emit('readable');
+        if (err) {
+            _this.emit('error', err);
+        } else {
+            _this.data = data;
+            _this.emit('readable');
+        }
     });
 };
 
@@ -175,6 +194,31 @@ FileSystem.prototype.createReadStream = function (path) {
     var frs = new FileSystem.ReadStream();
     frs.path = path;
     return frs;
+};
+
+FileSystem.WriteStream = function () {
+    Writable.call(this);
+};
+
+FileSystem.WriteStream.prototype.__proto__ = Writable.prototype;
+
+FileSystem.WriteStream.prototype.path = undefined;
+
+FileSystem.WriteStream.prototype._write = function (chunk) {
+    var _this = this;
+    fs.writeFile(this.path, chunk, function (err) {
+        if (err) {
+            _this.emit('error', err);
+        } else {
+            _this.emit('finish');
+        }
+    });
+};
+
+FileSystem.prototype.createWriteStream = function (path) {
+    var fws = new FileSystem.WriteStream();
+    fws.path = path;
+    return fws;
 };
 
 var fs = new FileSystem();
