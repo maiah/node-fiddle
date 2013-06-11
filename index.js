@@ -80,19 +80,30 @@ events.EventEmitter = EventEmitter;
 /*
  * Streams
  */
-var Readable = function () {};
+var Readable = function () {
+    EventEmitter.call(this);
+};
 
-Readable.prototype._read = undefined;
-Readable.prototype.push = undefined;
-Readable.prototype.unshift = undefined;
-Readable.prototype.wrap = undefined;
-Readable.prototype.setEncoding = undefined;
-Readable.prototype.read = undefined;
-Readable.prototype.pipe = undefined;
-Readable.prototype.unpipe = undefined;
-Readable.prototype.pause = undefined;
-Readable.prototype.pipe = undefined;
-Readable.prototype.resume = undefined;
+Readable.prototype.__proto__ = events.EventEmitter.prototype;
+
+Readable.prototype.data = undefined;
+
+Readable.prototype.read = function () {
+    return this.data;
+};
+
+Readable.prototype._read = function (size) {
+    throw new Error('Function is not overriden!');
+};
+
+Readable.prototype.on = function (event, listener) {
+    EventEmitter.prototype.on.call(this, event, listener);
+
+    if (event === 'readable') {
+        // Always zero for now. But implementors should read data.
+        this._read(0);
+    }
+};
 
 /*
  * I/O File System
@@ -139,7 +150,31 @@ FileSystem.prototype.writeFile = function (filename, data, cb) {
 
         file = new File(location, name, data);
         _this.files[filename] = file;
+
+        cb(null);
     });
+};
+
+FileSystem.ReadStream = function () {
+    Readable.call(this);
+};
+
+FileSystem.ReadStream.prototype.__proto__ = Readable.prototype;
+
+FileSystem.ReadStream.prototype.path = undefined;
+
+FileSystem.ReadStream.prototype._read = function (size) {
+    var _this = this;
+    fs.readFile(this.path, function (err, data) {
+        _this.data = data;
+        _this.emit('readable');
+    });
+};
+
+FileSystem.prototype.createReadStream = function (path) {
+    var frs = new FileSystem.ReadStream();
+    frs.path = path;
+    return frs;
 };
 
 var fs = new FileSystem();
