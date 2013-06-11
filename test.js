@@ -42,9 +42,21 @@ fs.readFile('/usr/bin/hello.txt', function (err, data) {
         console.log(data);
     }
 });
+    
+var fws = fs.createWriteStream('/hi.txt');
+fws.write('Cool WriteStream Yea!');
+fws.on('finish', function () {
+    console.log('Writing to WriteStream successful!');
+});
+fws.on('error', function (err) {
+    console.log(err.message);
+});
 
-var frs = fs.createReadStream('/hello.txt');
+var frs = fs.createReadStream('/hi.txt');
 frs.on('readable', function () {
     var content = frs.read();
     console.log('File ReadStream: ' + content);
+});
+frs.on('error', function (err) {
+    console.log(err.message);
 });
